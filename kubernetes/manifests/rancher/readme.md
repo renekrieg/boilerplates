@@ -1,4 +1,4 @@
-# Installation with helm and traefik allready set up
+# Installation with helm and traefik already set up
 Make sure, that helm and cert-manager are installed. If not install them.
 # Install helm
 ```bash

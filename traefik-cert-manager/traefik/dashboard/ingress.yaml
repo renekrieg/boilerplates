@@ -18,5 +18,5 @@ spec:
       services:
         - name: api@internal
           kind: TraefikService
-#  tls:
-#    secretName: local-krlab-tech-staging-tls
+  tls:
+    secretName: local-krlab-tech-tls

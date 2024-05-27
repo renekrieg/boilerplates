@@ -1,0 +1,95 @@
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: longhorn-bind-pvc
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: longhorn
+#   resources:
+#     requests:
+#       storage: 2Gi
+# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bind-deployment-longhorn
+  namespace: default
+  labels:
+    app: bind9
+spec:
+  selector:
+    matchLabels:
+      app: bind9
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: bind9
+      labels:
+        app: bind9
+    spec:
+      # initContainers:
+      # Init containers are exactly like regular containers, except:
+      # - Init containers always run to completion.
+      # - Each init container must complete successfully before the next one starts.
+      containers:
+        - name: bind9
+          image: ubuntu/bind9
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: BIND9_USER
+              value: root
+            - name: TZ
+              value: Europe/Berlin
+          ports:
+            - containerPort: 53
+              protocol: TCP
+            - containerPort: 53
+              protocol: UDP
+          volumeMounts:
+            - name: volv
+              mountPath: "/root"
+              subPath: config
+            - name: volv
+              mountPath: "/var/cache/bind"
+              subPath: cache
+            - name: volv
+              mountPath: "/var/lib/bind"
+              subPath: records
+      restartPolicy: Always
+      volumes:
+        - name: volv
+          persistentVolumeClaim:
+            claimName: bind9
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bind-service-longhorn
+  namespace: default
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  loadBalancerIP: 172.16.50.89 # this is your DNS IP, NOT THE GUI!
+  ports:
+    - protocol: UDP
+      port: 53
+      targetPort: 53
+      name: dns-udp
+    - protocol: TCP
+      port: 53
+      targetPort: 53
+      name: dns-tcp
+    - name: bind-service-rancher
+      port: 38472
+      targetPort: 38472
+    - name: bind-service-portainer
+      port: 28312
+      targetPort: 28312
+  selector:
+    app: bind9
+---
+

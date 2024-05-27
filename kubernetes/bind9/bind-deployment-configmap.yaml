@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bind9-configmap
+data:
+  named.conf: |
+    include "/etc/bind/named.conf.default-zones";
+    include "/etc/bind/named.conf.local";
+    include "/etc/bind/named.conf.options";
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bind-deployment
+  namespace: default
+  labels:
+    app: bind9
+spec:
+  selector:
+    matchLabels:
+      app: bind9
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: bind9
+      labels:
+        app: bind9
+    spec:
+      # initContainers:
+      # Init containers are exactly like regular containers, except:
+      # - Init containers always run to completion.
+      # - Each init container must complete successfully before the next one starts.
+      containers:
+        - name: bind9
+          image: ubuntu/bind9
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: BIND9_USER
+              value: root
+            - name: TZ
+              value: Europe/Berlin
+          ports:
+            - containerPort: 53
+              protocol: TCP
+            - containerPort: 53
+              protocol: UDP
+          volumeMounts:
+            - name: bind9-config-file
+              mountPath: "/etc/bind"
+      restartPolicy: Always
+      volumes:
+        - name: bind9-config-file
+          configMap:
+            name: bind9-configmap

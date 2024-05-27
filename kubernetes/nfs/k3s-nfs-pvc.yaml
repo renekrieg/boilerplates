@@ -1,0 +1,12 @@
+# k3s-nfs-bind-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-bind
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-bind
+  resources:
+    requests:
+     storage: 1Gi

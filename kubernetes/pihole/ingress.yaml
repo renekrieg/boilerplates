@@ -1,0 +1,31 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pihole
+  namespace: pihole
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`www.pihole.local.krlab.tech`) # change to your domain
+      kind: Rule
+      middlewares:
+      - name: dashboard-redirect
+      - name: dashboard-prefix
+      services:
+        - name: pihole
+          port: 80
+    - match: Host(`pihole.local.krlab.tech`) # change to your domain
+      kind: Rule
+      middlewares:
+      - name: dashboard-redirect
+      - name: dashboard-prefix
+      - name: default-headers
+      services:
+        - name: pihole
+          port: 80
+  tls:
+    secretName: local-krlab-tech-tls

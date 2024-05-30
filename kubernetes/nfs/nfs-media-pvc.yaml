@@ -2,11 +2,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-bind
+  name: nfs-media
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: nfs-bind
+  storageClassName: nfs-media
   resources:
     requests:
-     storage: 1Gi
+      storage: 1000Gi
+

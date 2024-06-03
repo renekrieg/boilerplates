@@ -21,5 +21,13 @@ spec:
         app: nginx
     spec:
       containers:
-      - name: nginx
-        image: nginx:latest
+        - name: nginx
+          image: nginx:latest
+          volumeMounts:
+            - name: media
+              mountPath: /data
+      volumes:
+        - name: media
+          nfs:
+            server: nfs-media
+            path: /volume1/data

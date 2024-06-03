@@ -24,6 +24,11 @@ spec:
         - name: plex
           image: "linuxserver/plex:latest"
           imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          securityContext:
+            privileged: true
           ports:
             - containerPort: 32400
               hostPort: 32400
@@ -32,8 +37,6 @@ spec:
               mountPath: /config
             - name: media
               mountPath: /data
-            - name: qs-dri
-              mountPath: /dev/dri
           env:
             - name: PGID
               value: "1000"
@@ -44,10 +47,12 @@ spec:
             - name: VERSION
               value: "docker"
             - name: PLEX_CLAIM
-              value: "claim-yB1SvcJSmjCJXcuY6DsH"
+              value: "claim-5xXxyAFs2ZMXGuVQH_Xp"
             - name: NVIDIA_VISIBLE_DEVICES
               value: "all"
             - name: NVIDIA_DRIVER_CAPABILITIES
+              value: "compute,video,utility"
+            - name: CUDA_DRIVER_CAPABILITIES
               value: "compute,video,utility"
 
       volumes:
@@ -57,9 +62,6 @@ spec:
         - name: media
           persistentVolumeClaim:
             claimName: nfs-media
-        - name: qs-dri
-          hostPath:
-            path: /dev/dri
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

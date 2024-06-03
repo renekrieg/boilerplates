@@ -1,29 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: plex
-  namespace: media
   labels:
     app: plex
-    env: production
+    app.kubernetes.io/instance: plex
+    app.kubernetes.io/name: plex
+  name: plex
+  namespace: media
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: plex
-      env: production
   template:
     metadata:
       labels:
         app: plex
-        env: production
+        app.kubernetes.io/name: plex
     spec:
       nodeSelector:
         worker: "true"
+      runtimeClassName: nvidia
       containers:
         - name: plex
           image: "linuxserver/plex:latest"
           imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          securityContext:
+            privileged: true
           ports:
             - containerPort: 32400
               hostPort: 32400
@@ -32,8 +38,6 @@ spec:
               mountPath: /config
             - name: media
               mountPath: /data
-            - name: qs-dri
-              mountPath: /dev/dri
           env:
             - name: PGID
               value: "1000"
@@ -44,12 +48,13 @@ spec:
             - name: VERSION
               value: "docker"
             - name: PLEX_CLAIM
-              value: "claim-yB1SvcJSmjCJXcuY6DsH"
+              value: "claim-VYz8udxm4CggeEQHkphi"
             - name: NVIDIA_VISIBLE_DEVICES
               value: "all"
             - name: NVIDIA_DRIVER_CAPABILITIES
-              value: "compute,video,utility"
-
+              value: "all"
+            - name: CUDA_DRIVER_CAPABILITIES
+              value: "all"
       volumes:
         - name: plexconfig
           persistentVolumeClaim:
@@ -57,22 +62,6 @@ spec:
         - name: media
           persistentVolumeClaim:
             claimName: nfs-media
-        - name: qs-dri
-          hostPath:
-            path: /dev/dri
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: plex-pvc
-  namespace: media
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: 10Gi
 ---
 apiVersion: v1
 kind: Service
@@ -87,27 +76,3 @@ spec:
     - protocol: TCP
       port: 32400
       targetPort: 32400
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: plex
-  namespace: media
-  annotations:
-    kubernetes.io/ingress.class: traefik-external
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: Host(`www.plex.local.krlab.tech`)
-      kind: Rule
-      services:
-        - name: plex
-          port: 32400
-    - match: Host(`plex.local.krlab.tech`)
-      kind: Rule
-      services:
-        - name: plex
-          port: 32400
-  tls:
-    secretName: local-krlab-tech-tls

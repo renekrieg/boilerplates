@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: jellyfin
+    app.kubernetes.io/instance: jellyfin
+    app.kubernetes.io/name: jellyfin
+  name: jellyfin
+  namespace: media
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+        app.kubernetes.io/name: jellyfin
+    spec:
+      nodeSelector:
+        worker: "true"
+      runtimeClassName: nvidia
+      containers:
+      - name: jellyfin
+        image: jellyfin/jellyfin
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            nvidia.com/gpu: 1 # requesting 1 GPU
+        ports:
+        - containerPort: 8096
+          name: web
+          protocol: TCP
+        env:
+        - name: TZ
+          value: Europe/Berlin
+        volumeMounts:
+        - mountPath: /config
+          name: jellyfinconfig
+        - mountPath: /data
+          name: media
+      volumes:
+        - name: jellyfinconfig
+          persistentVolumeClaim:
+            claimName: jellyfin-pvc
+        - name: media
+          persistentVolumeClaim:
+            claimName: nfs-media
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: jellyfin
+  name: jellyfin
+  namespace: media 
+spec:
+  type: LoadBalancer
+  ports:
+  - name: web-tcp
+    port: 8096
+    protocol: TCP
+    targetPort: 8096
+  - name: web-udp
+    port: 8096
+    protocol: UDP
+    targetPort: 8096
+  selector:
+    app: jellyfin

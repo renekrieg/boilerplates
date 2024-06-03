@@ -1,0 +1,41 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: rackstation
+  namespace: external-websites
+spec:
+  type: ExternalName
+  externalName: 172.16.50.4
+  ports:
+    - name: https
+      port: 5000
+      targetPort: 5000
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: rackstation
+  namespace: external-websites
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`www.rackstation.local.krlab.tech`)
+      kind: Rule
+      services:
+        - name: rackstation
+          port: 5000
+          scheme: https
+          passHostHeader: true
+    - match: Host(`rackstation.local.krlab.tech`)
+      kind: Rule
+      priority: 1
+      services:
+        - name: rackstation
+          port: 5000
+      middlewares:
+        - name: default-headers
+  tls:
+    secretName: local-krlab-tech-tls

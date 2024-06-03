@@ -40,8 +40,8 @@ spec:
         - env:
             - name: TZ
               value: "Europe/Berlin"
-            - name: WEBPASSWORD
-              value: password # change this!
+            # - name: WEBPASSWORD
+            #   value: password # change this!
             - name: FTLCONF_REPLY_ADDR4
               value: pihole
             - name: PIHOLE_DNS_
@@ -68,6 +68,8 @@ spec:
           volumeMounts:
           - mountPath: /etc/pihole
             name: pihole
+          - mountPath: /etc/dnsmasq.d
+            name: pihole-dnsmasq
           securityContext:
             capabilities:
               add:
@@ -77,18 +79,9 @@ spec:
         - name: pihole
           persistentVolumeClaim:
             claimName: pihole
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: pihole
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: 2Gi
+        - name: pihole-dnsmasq
+          persistentVolumeClaim:
+            claimName: pihole-dnsmasq
 ---
 apiVersion: v1
 kind: Service

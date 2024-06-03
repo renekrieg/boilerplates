@@ -48,6 +48,11 @@ helm install gpu-operator -n gpu-operator nvidia/gpu-operator --values values.ya
 ```bash
 kubectl apply -f nvidia-smi.yaml
 ```
+Check if its working
+```bash
+kubectl logs nvidia-smi
+```
+
 If nvidia-smi works you can delete the pod.
 ```bash
 kubectl delete -f nvidia-smi.yaml

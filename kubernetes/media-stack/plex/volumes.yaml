@@ -11,7 +11,7 @@ spec:
   storageClassName: nfs-media
   nfs:
     server: 172.16.50.4
-    path: "/volume1/data/media"
+    path: "/volume1/htcp/media"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -25,3 +25,16 @@ spec:
   resources:
     requests:
       storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plex-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi

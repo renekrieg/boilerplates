@@ -2,19 +2,21 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: radarr
-  namespace: media
+  namespace: mediacenter
   labels:
     app: radarr
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: radarr
-  replicas: 1
   template:
     metadata:
       labels:
         app: radarr
     spec:
+      securityContext:
+        fsGroup: 1000 
       nodeSelector:
         worker: "true"
       initContainers:
@@ -40,10 +42,10 @@ spec:
           name: radarr-config 
       containers:
         - name: radarr
-          image: ghcr.io/hotio/radarr:latest
+          image: linuxserver/radarr
           ports:
             - containerPort: 7878
-              hostPort: 7878
+              name: webui
           env:
             - name: PGID
               value: "1000"
@@ -51,15 +53,47 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Berlin"
+          livenessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl "http://localhost:7878/radarr/api/health?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl "http://localhost:7878/radarr/api/system/status?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
+            initialDelaySeconds: 30
+            periodSeconds: 10
           volumeMounts:
-            - mountPath: /config
+            - mountPath: "/config"
               name: radarr-config
-            # - mountPath: /data
-            #   name: data
+            - mountPath: /data
+              name: mediacenter
       volumes:
         - name: radarr-config
           persistentVolumeClaim:
             claimName: radarr-config-pvc
-        # - name: data
-        #   persistentVolumeClaim:
-        #     claimName: nfs-data
+        - name: mediacenter
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: radarr
+  name: radarr
+  namespace: mediacenter
+spec:
+  selector:
+    app: radarr
+  ports:
+  - port: 7878
+    protocol: TCP
+    targetPort: 7878
+  # ---

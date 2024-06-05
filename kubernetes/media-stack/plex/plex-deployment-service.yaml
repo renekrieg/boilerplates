@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/instance: plex
     app.kubernetes.io/name: plex
   name: plex
-  namespace: media
+  namespace: mediacenter
 spec:
   replicas: 1
   selector:
@@ -28,17 +28,12 @@ spec:
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              nvidia.com/gpu: 1
+              nvidia.com/gpu: "1"
           securityContext:
             privileged: true
           ports:
             - containerPort: 32400
               hostPort: 32400
-          volumeMounts:
-            - name: plexconfig
-              mountPath: /config
-            - name: media
-              mountPath: /data
           env:
             - name: PGID
               value: "1000"
@@ -56,13 +51,19 @@ spec:
               value: "all"
             - name: CUDA_DRIVER_CAPABILITIES
               value: "all"
+          volumeMounts:
+            - mountPath: "/config"
+              name: plex-config
+            - mountPath: "/data"
+              name: mediacenter
+              subPath: media
       volumes:
-        - name: plexconfig
+        - name: plex-config
           persistentVolumeClaim:
-            claimName: plex-pvc
-        - name: media
+            claimName: plex-config-pvc
+        - name: mediacenter
           persistentVolumeClaim:
-            claimName: nfs-media
+            claimName: nfs-mediacenter
 ---
 apiVersion: v1
 kind: Service
@@ -70,11 +71,11 @@ metadata:
   labels:
     app: plex
   name: plex
-  namespace: media
+  namespace: mediacenter
 spec:
   selector:
     app: plex
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 32400

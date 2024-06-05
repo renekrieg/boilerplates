@@ -1,5 +1,5 @@
 ```bash
-kubectl create namespace media
+kubectl create namespace mediacenter
 ```
 
 # Create PV

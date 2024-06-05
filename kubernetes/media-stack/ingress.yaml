@@ -22,5 +22,11 @@ spec:
           port: 32400
       middlewares:
         - name: default-headers
+    - match: Host(`media.local.krlab.tech`) && PathPrefix(`/radarr`)
+      kind: Rule
+      priority: 0
+      services:
+        - name: radarr
+          port: 7878
   tls:
     secretName: local-krlab-tech-tls

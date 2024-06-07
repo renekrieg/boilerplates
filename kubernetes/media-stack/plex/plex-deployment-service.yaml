@@ -44,7 +44,7 @@ spec:
             - name: VERSION
               value: "docker"
             - name: PLEX_CLAIM
-              value: "claim-6qoNrz68CEry92cxdz_K"
+              value: "claim-Gsjs7WbYaG5Di8XNoJxm"
             - name: NVIDIA_VISIBLE_DEVICES
               value: "all"
             - name: NVIDIA_DRIVER_CAPABILITIES
@@ -75,7 +75,7 @@ metadata:
 spec:
   selector:
     app: plex
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - protocol: TCP
       port: 32400

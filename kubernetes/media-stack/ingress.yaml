@@ -2,7 +2,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: plex
+  name: mediacenter
   namespace: mediacenter
   annotations:
     kubernetes.io/ingress.class: traefik-external
@@ -38,13 +38,13 @@ spec:
       kind: Rule
       priority: 0
       services:
-        - name: sonarr
+        - name: prowlarr
           port: 9696
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/bazarr`)
       kind: Rule
       priority: 0
       services:
-        - name: sonarr
+        - name: bazarr
           port: 6767
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/sabnzbd`)
       kind: Rule
@@ -52,5 +52,11 @@ spec:
       services:
         - name: sabnzbd
           port: 8080
+    - match: Host(`media.local.krlab.tech`) && PathPrefix(`/notifiarr`)
+      kind: Rule
+      priority: 0
+      services:
+        - name: notifiarr
+          port: 5454
   tls:
     secretName: local-krlab-tech-tls

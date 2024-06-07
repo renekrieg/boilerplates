@@ -85,6 +85,7 @@ metadata:
   name: prowlarr
   namespace: mediacenter
 spec:
+  type:  ClusterIP
   selector:
     app: prowlarr
   ports:

@@ -29,17 +29,17 @@ spec:
           name: bazarr-config  
         # - mountPath: /data 
         #   name: data
-      - name: config
-        image: busybox
-        command: ["sh", "-c"]
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 1000
-        args:
-          - "echo start;[[ ! -f /config/config.xml ]] && echo '<Config><UrlBase>/bazarr</UrlBase></Config>'> /config/config.xml;echo end;"
-        volumeMounts: 
-        - mountPath: /config 
-          name: bazarr-config 
+      # - name: config
+      #   image: busybox
+      #   command: ["sh", "-c"]
+      #   securityContext:
+      #     runAsUser: 1000
+      #     runAsGroup: 1000
+      #   args:
+      #     - "echo start;[[ ! -f /config/config.xml ]] && echo '<Config><UrlBase>/bazarr</UrlBase></Config>'> /config/config.xml;echo end;"
+      #   volumeMounts: 
+      #   - mountPath: /config 
+      #     name: bazarr-config 
       containers:
         - name: bazarr
           image: linuxserver/bazarr
@@ -90,6 +90,7 @@ metadata:
   name: bazarr
   namespace: mediacenter
 spec:
+  type: ClusterIP
   selector:
     app: bazarr
   ports:

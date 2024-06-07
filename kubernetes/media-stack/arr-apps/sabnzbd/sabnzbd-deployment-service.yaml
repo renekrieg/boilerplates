@@ -92,7 +92,7 @@ metadata:
   name: sabnzbd
   namespace: mediacenter
 spec:
-  type:  NodePort
+  type:  ClusterIP
   selector:
     app: sabnzbd
   ports:

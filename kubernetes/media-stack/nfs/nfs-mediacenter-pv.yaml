@@ -7,7 +7,7 @@ spec:
   capacity:
     storage: 100Gi
   accessModes:
-    - ReadOnlyMany
+    - ReadWriteMany
   storageClassName: nfs-mediacenter
   nfs:
     server: 172.16.50.4

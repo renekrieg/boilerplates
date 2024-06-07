@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sabnzbd
+  namespace: mediacenter
+  labels:
+    app: sabnzbd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sabnzbd
+  template:
+    metadata:
+      labels:
+        app: sabnzbd
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      nodeSelector:
+        worker: "true"
+      initContainers:
+      - name: chown
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /config"]
+        # command: ["sh", "-c", "chown -R 1000:1000 /config && chown -R 1000:1000 /data"]
+        volumeMounts:
+        - mountPath: /config 
+          name: sabnzbd-config  
+        - mountPath: "/data" 
+          name: mediacenter
+      # - name: config
+      #   image: busybox
+      #   command: ["sh", "-c"]
+      #   securityContext:
+      #     runAsUser: 1000
+      #     runAsGroup: 1000
+      #   args:
+      #     - "echo start;[[ ! -f /config/config.xml ]] && echo '<Config><UrlBase>/sabnzbd</UrlBase></Config>'> /config/config.xml;echo end;"
+      #   volumeMounts: 
+      #   - mountPath: /config 
+      #     name: sabnzbd-config 
+      containers:
+        - name: sabnzbd
+          image: hotio/sabnzbd
+          ports:
+            - containerPort: 8080
+              name: webui
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
+            - name: defaultRule
+              value: ""
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #     - /bin/sh
+          #     - -c
+          #     - curl "http://localhost:8080/sabnzbd/api/health?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/sabnzbd.ini)"
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #     - /bin/sh
+          #     - -c
+          #     - curl "http://localhost:8080/sabnzbd/api/system/status?ApiKey=$(sed -ne 's/api_key = /\1 /p' /config/sabnzbd.ini)"
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          volumeMounts:
+            - mountPath: "/config"
+              name: sabnzbd-config
+            - mountPath: /data
+              name: mediacenter
+      volumes:
+        - name: sabnzbd-config
+          persistentVolumeClaim:
+            claimName: sabnzbd-config-pvc
+        - name: mediacenter
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: sabnzbd
+  name: sabnzbd
+  namespace: mediacenter
+spec:
+  type:  NodePort
+  selector:
+    app: sabnzbd
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080

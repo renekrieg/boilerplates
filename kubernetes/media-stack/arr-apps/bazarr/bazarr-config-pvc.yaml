@@ -1,13 +1,13 @@
-# k3s-nfs-bind-pvc.yaml
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nfs-mediacenter
+  name: bazarr-config-pvc
   namespace: mediacenter
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: nfs-mediacenter
+  storageClassName: longhorn
   resources:
     requests:
-      storage: 100Gi
+      storage: 10Gi

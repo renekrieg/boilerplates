@@ -1,0 +1,7 @@
+namespace:
+- kind: PersistentVolume
+  path: spec/claimRef/namespace
+  create: true
+varReference:
+- path: spec/template/spec/volumes/persistentVolumeClaim/claimName
+  kind: Deployment

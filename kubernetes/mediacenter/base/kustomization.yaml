@@ -2,12 +2,12 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 namespace: test
-
 commonLabels:
-  app: mediacenter
+  env: homelab
+  
 
 resources:
   - namespace.yaml
   - radarr
-  - sonarr
-  - ingress-route.yaml
+  # - sonarr
+  # - ingress-route.yaml

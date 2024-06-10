@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: bazarr-config-pvc
+  name: radarr-pvc
   namespace: mediacenter
 spec:
   accessModes:

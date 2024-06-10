@@ -1,80 +1,82 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    run: radarr
   name: radarr
+  namespace: mediacenter
+  labels:
+    app: radarr
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: radarr
+      app: radarr
   template:
     metadata:
       labels:
-        run: radarr
+        app: radarr
     spec:
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
+        fsGroup: 1000 
+      nodeSelector:
+        worker: "true"
       initContainers:
-        - name: chown
-          image: busybox
-          command:
-            [
-              "sh",
-              "-c",
-              "chown -R 1000:1000 /config && chown -R 1000:1000 /data",
-            ]
-          volumeMounts:
-            - mountPath: /config
-              name: config-pvc
-              subPath: radarr
-            - mountPath: /data
-              name: nfs-data
-        - name: config
-          image: busybox
-          command: ["sh", "-c"]
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-          args:
-            - "echo start;[[ ! -f /config/config.xml ]] && echo '<Config><UrlBase>/$(RADARR)</UrlBase></Config>'> /config/config.xml;echo end;"
-          volumeMounts:
-            - mountPath: /config
-              name: config-pvc
+      - name: chown
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /config"]
+        volumeMounts:
+        - mountPath: /config 
+          name: config-pvc  
+        # - mountPath: /data 
+        #   name: data
+      - name: config
+        image: busybox
+        command: ["sh", "-c"]
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        args:
+          - "echo start;[[ ! -f /config/config.xml ]] && echo '<Config><UrlBase>/$(APPNAME)</UrlBase></Config>'> /config/config.xml;echo end;"
+        volumeMounts: 
+        - mountPath: /config 
+          name: config-pvc 
       containers:
-        - env:
-            - name: TZ
-              value: Europe/Berlin
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
+        - name: radarr
           image: linuxserver/radarr
-          name: radarr
           ports:
             - containerPort: 7878
               name: webui
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
           livenessProbe:
             exec:
               command:
-                - /bin/sh
-                - -c
-                - curl "http://localhost:7878/radarr/api/health?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
+              - /bin/sh
+              - -c
+              - curl "http://localhost:7878/radarr/api/health?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             exec:
               command:
-                - /bin/sh
-                - -c
-                - curl "http://localhost:7878/radarr/api/system/status?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
+              - /bin/sh
+              - -c
+              - curl "http://localhost:7878/radarr/api/system/status?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
             initialDelaySeconds: 30
             periodSeconds: 10
           volumeMounts:
-            - mountPath: /config
+            - mountPath: "/config"
               name: config-pvc
             - mountPath: /data
-              name: nfs-data
+              name: mediacenter
+      volumes:
+        - name: config-pvc
+          persistentVolumeClaim:
+            claimName: config-pvc
+        - name: mediacenter
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter

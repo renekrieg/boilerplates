@@ -1,0 +1,11 @@
+replacements:
+- source: 
+    name: myapp
+    kind: Service
+    version: v1
+  targets:
+  - select: 
+      kind: Deployment
+      name: myapp
+    fieldPaths:
+    - metadata.[name=myapp]

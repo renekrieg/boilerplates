@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+
+resources:
+  - ../../../base
+configurations:
+  - kustomizeconfig.yaml
+labels:
+- pairs:
+    app: radarr-hd
+- pairs:
+    run: radarr-hd
+  includeSelectors: true
+
+# replacements:
+# - path: replacement.yaml
+#patches:
+#   - target:
+#       kind: .*
+#       name: .*
+#     patch: |-
+#       - op: replace
+#         path: /metadata/name
+#         value: radarr-hd
+  # - path: config-pvc.yaml
+
+
+vars:
+- name: APPNAME
+  objref:
+    name: radarr
+    kind: Service
+    apiVersion: v1
+  fieldref:
+    fieldpath: metadata.name
+

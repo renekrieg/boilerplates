@@ -2,24 +2,19 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: jellyfin
-  namespace: media
+  name: mediacenter
+  namespace: mediacenter
   annotations:
     kubernetes.io/ingress.class: traefik-external
 spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`www.jellyfin.local.krlab.tech`)
+    - match: Host(`media.local.krlab.tech`)
       kind: Rule
       services:
         - name: plex
-          port: 8096
-    - match: Host(`jellyfin.local.krlab.tech`)
-      kind: Rule
-      services:
-        - name: plex
-          port: 8096
+          port: 32400
       middlewares:
         - name: default-headers
   tls:

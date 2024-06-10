@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whisparr
+  namespace: whisparr
+  labels:
+    app: whisparr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whisparr
+  template:
+    metadata:
+      labels:
+        app: whisparr
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      nodeSelector:
+        worker: "true"
+      initContainers:
+      - name: chown
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /config"]
+        # command: ["sh", "-c", "chown -R 1000:1000 /config && chown -R 1000:1000 /data"]
+        volumeMounts:
+        - mountPath: /config 
+          name: whisparr-config  
+        # - mountPath: /data 
+        #   name: data
+      - name: config
+        image: busybox
+        command: ["sh", "-c"]
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        args:
+          - "echo start;[[ ! -f /config/config.xml ]] && echo '<Config><UrlBase>/whisparr</UrlBase></Config>'> /config/config.xml;echo end;"
+        volumeMounts: 
+        - mountPath: /config 
+          name: whisparr-config 
+      containers:
+        - name: whisparr
+          image: ghcr.io/hotio/whisparr
+          ports:
+            - containerPort: 6969
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: UMASK
+              value: "002"
+            - name: TZ
+              value: "Europe/Berlin"
+          volumeMounts:
+            - mountPath: "/config"
+              name: whisparr-config
+            - mountPath: /data
+              name: mediacenter-whisparr
+      volumes:
+        - name: whisparr-config
+          persistentVolumeClaim:
+            claimName: whisparr-config-pvc
+        - name: mediacenter-whisparr
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter-whisparr
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: whisparr
+  name: whisparr
+  namespace: whisparr
+spec:
+  selector:
+    app: whisparr
+  type: LoadBalancer
+  ports:
+  - port: 6969
+    protocol: TCP
+    targetPort: 6969
+  # ---

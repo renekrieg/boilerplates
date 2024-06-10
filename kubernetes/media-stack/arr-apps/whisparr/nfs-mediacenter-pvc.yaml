@@ -1,0 +1,13 @@
+# k3s-nfs-bind-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-mediacenter-whisparr
+  namespace: whisparr
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-mediacenter-whisparr
+  resources:
+    requests:
+      storage: 100Gi

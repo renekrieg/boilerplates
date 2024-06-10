@@ -1,0 +1,14 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: radarr
+  name: radarr
+spec:
+  template:
+    spec:
+      nodeSelector:
+        worker: "true"
+      volumes:
+        - name: 

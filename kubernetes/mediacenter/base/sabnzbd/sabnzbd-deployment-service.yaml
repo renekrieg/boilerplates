@@ -29,17 +29,17 @@ spec:
           name: sabnzbd-config  
         - mountPath: "/data" 
           name: mediacenter
-      - name: config
-        image: busybox
-        command: ["sh", "-c"]
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 1000
-        args:
-          - "echo start; sed '/host_whitelist/ s/$/ , media.local.krlab.tech, traefik.local.krlab.tech, sabnzbd/' /config/sabnzbd.ini ;echo end;"
-        volumeMounts: 
-        - mountPath: /config 
-          name: sabnzbd-config 
+      # - name: config
+      #   image: busybox
+      #   command: ["sh", "-c"]
+      #   securityContext:
+      #     runAsUser: 1000
+      #     runAsGroup: 1000
+      #   args:
+      #     - "echo start;[[ ! -f /config/config.xml ]] && echo '<Config><UrlBase>/sabnzbd</UrlBase></Config>'> /config/config.xml;echo end;"
+      #   volumeMounts: 
+      #   - mountPath: /config 
+      #     name: sabnzbd-config 
       containers:
         - name: sabnzbd
           image: hotio/sabnzbd
@@ -83,19 +83,3 @@ spec:
         - name: mediacenter
           persistentVolumeClaim:
             claimName: nfs-mediacenter
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: sabnzbd
-  name: sabnzbd
-  namespace: mediacenter
-spec:
-  type:  ClusterIP
-  selector:
-    app: sabnzbd
-  ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 8080

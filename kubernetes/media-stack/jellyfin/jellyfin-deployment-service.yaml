@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/instance: jellyfin
     app.kubernetes.io/name: jellyfin
   name: jellyfin
-  namespace: media
+  namespace: mediacenter
 spec:
   replicas: 1
   selector:
@@ -28,26 +28,36 @@ spec:
         imagePullPolicy: IfNotPresent
         resources:
           limits:
-            nvidia.com/gpu: 1 # requesting 1 GPU
+            nvidia.com/gpu: "1" # requesting 1 GPU
         ports:
         - containerPort: 8096
           name: web
           protocol: TCP
         env:
-        - name: TZ
-          value: Europe/Berlin
+          - name: PGID
+            value: "1000"
+          - name: PUID
+            value: "1000"
+          - name: TZ
+            value: "Europe/Berlin"
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: "all"
+          - name: NVIDIA_DRIVER_CAPABILITIES
+            value: "all"
+          - name: CUDA_DRIVER_CAPABILITIES
+            value: "all"
         volumeMounts:
         - mountPath: /config
-          name: jellyfinconfig
+          name: jellyfin-config
         - mountPath: /data
-          name: media
+          name: mediacenter
       volumes:
-        - name: jellyfinconfig
+        - name: jellyfin-config
           persistentVolumeClaim:
-            claimName: jellyfin-pvc
-        - name: media
+            claimName: jellyfin-config-pvc
+        - name: mediacenter
           persistentVolumeClaim:
-            claimName: nfs-media
+            claimName: nfs-mediacenter-xxx
 ---
 apiVersion: v1
 kind: Service
@@ -55,7 +65,7 @@ metadata:
   labels:
     app: jellyfin
   name: jellyfin
-  namespace: media 
+  namespace: mediacenter 
 spec:
   type: LoadBalancer
   ports:

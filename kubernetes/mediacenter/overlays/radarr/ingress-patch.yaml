@@ -1,0 +1,9 @@
+- op: add #action
+  path: "/spec/routes/-1" #resouirce we want to change
+  value:             #value we want to use for patching
+    match: Host(`media.local.krlab.tech`) && PathPrefix(`/radarr`)
+    kind: Rule
+    priority: 0
+    services:
+      - name: radarr
+        port: 7878

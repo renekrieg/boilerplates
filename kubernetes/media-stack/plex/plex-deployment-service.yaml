@@ -44,7 +44,7 @@ spec:
             - name: VERSION
               value: "docker"
             - name: PLEX_CLAIM
-              value: "claim-Gsjs7WbYaG5Di8XNoJxm"
+              value: "claim-hyCW62xjGawCigMuKFSd"
             - name: NVIDIA_VISIBLE_DEVICES
               value: "all"
             - name: NVIDIA_DRIVER_CAPABILITIES

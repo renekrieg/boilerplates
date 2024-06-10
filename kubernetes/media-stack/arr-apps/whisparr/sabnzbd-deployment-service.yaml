@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sabnzbd-whisparr
+  namespace: whisparr
+  labels:
+    app: sabnzbd-whisparr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sabnzbd-whisparr
+  template:
+    metadata:
+      labels:
+        app: sabnzbd-whisparr
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      nodeSelector:
+        worker: "true"
+      initContainers:
+      - name: chown
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /config"]
+        volumeMounts:
+        - mountPath: /config 
+          name: sabnzbd-whisparr-config  
+        - mountPath: "/data" 
+          name: mediacenter-whisparr
+      containers:
+        - name: sabnzbd-whisparr
+          image: hotio/sabnzbd
+          ports:
+            - containerPort: 8080
+              name: webui
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
+            - name: defaultRule
+              value: ""
+          volumeMounts:
+            - mountPath: "/config"
+              name: sabnzbd-whisparr-config
+            - mountPath: /data
+              name: mediacenter-whisparr
+      volumes:
+        - name: sabnzbd-whisparr-config
+          persistentVolumeClaim:
+            claimName: sabnzbd-whisparr-config-pvc
+        - name: mediacenter-whisparr
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter-whisparr
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: sabnzbd-whisparr
+  name: sabnzbd-whisparr
+  namespace: whisparr
+spec:
+  type:  LoadBalancer
+  selector:
+    app: sabnzbd-whisparr
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080

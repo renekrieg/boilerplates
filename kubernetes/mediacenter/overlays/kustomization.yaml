@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+
+bases:
+  - ../base
+
+commonLabels:
+  env: dev
+
+patches:
+  - path: radarr/deployment.yaml
+  - path: radarr/service.yaml
+  - target:
+       kind: IngressRoute
+       name: mediacenter
+    path: 
+      radarr/ingress-patch.yaml
+  - path: sonarr/deployment.yaml
+  - path: sonarr/service.yaml
+  - target:
+       kind: IngressRoute
+       name: mediacenter
+    path: 
+        sonarr/ingress-patch.yaml
+  - path: plex/deployment.yaml
+  - path: plex/service.yaml
+  - target:
+       kind: IngressRoute
+       name: mediacenter
+    path: 
+        plex/ingress-patch.yaml

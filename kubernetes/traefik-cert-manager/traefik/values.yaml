@@ -15,6 +15,10 @@ deployment:
   additionalContainers: []
   initContainers: []
 
+# -- nodeSelector is the simplest recommended form of node selection constraint.
+nodeSelector:
+  worker: "true"
+
 ports:
   web:
     redirectTo:

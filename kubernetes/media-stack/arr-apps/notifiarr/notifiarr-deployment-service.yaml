@@ -19,16 +19,18 @@ spec:
         fsGroup: 1000 
       nodeSelector:
         worker: "true"
-      initContainers:
-      - name: chown
-        image: busybox
-        command: ["sh", "-c", "cat /config/notifiarr.conf"]
-        volumeMounts:
-        - mountPath: /config 
-          name: notifiarr-config
+      # initContainers:
+      # - name: chown
+      #   image: busybox
+      #   command: ["sh", "-c", "cat /config/notifiarr.conf"]
+      #   volumeMounts:
+      #   - mountPath: /config 
+      #     name: notifiarr-config
       containers:
         - name: notifiarr
           image: golift/notifiarr
+          securityContext:
+            privileged: true
           ports:
             - containerPort: 5454
               name: webui
@@ -47,7 +49,7 @@ spec:
       volumes:
         - name: notifiarr-config
           persistentVolumeClaim:
-            claimName: notifiarr-config-pvc
+            claimName: notifiarr
 ---
 apiVersion: v1
 kind: Service

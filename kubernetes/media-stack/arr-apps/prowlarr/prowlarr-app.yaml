@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+  namespace: mediacenter
+  labels:
+    app: prowlarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prowlarr
+  template:
+    metadata:
+      labels:
+        app: prowlarr
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      nodeSelector:
+        worker: "true"
+      initContainers:
+      - name: chown
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /config"]
+        # command: ["sh", "-c", "chown -R 1000:1000 /config && chown -R 1000:1000 /data"]
+        volumeMounts:
+        - mountPath: /config 
+          name: config  
+        # - mountPath: /data 
+        #   name: data
+      - name: config
+        image: busybox
+        command: ["sh", "-c"]
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        args:
+          - "echo start;[[ ! -f /config/config.xml ]] && echo '<Config><UrlBase>/prowlarr</UrlBase></Config>'> /config/config.xml;echo end;"
+        volumeMounts: 
+        - mountPath: /config 
+          name: config 
+      containers:
+        - name: prowlarr
+          image: linuxserver/prowlarr
+          ports:
+            - containerPort: 9696
+              name: webui
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
+          livenessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl "http://localhost:9696/prowlarr/api/health?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl "http://localhost:9696/prowlarr/api/system/status?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          volumeMounts:
+            - mountPath: "/config"
+              name: config
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: prowlarr-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prowlarr-pvc
+  namespace: mediacenter
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: prowlarr
+  name: prowlarr
+  namespace: mediacenter
+spec:
+  type:  ClusterIP
+  selector:
+    app: prowlarr
+  ports:
+  - port: 9696
+    protocol: TCP
+    targetPort: 9696
+  # ---

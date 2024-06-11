@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: plex
+    app.kubernetes.io/instance: plex
+    app.kubernetes.io/name: plex
+  name: plex
+  namespace: mediacenter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plex
+  template:
+    metadata:
+      labels:
+        app: plex
+        app.kubernetes.io/name: plex
+    spec:
+      nodeSelector:
+        worker: "true"
+      runtimeClassName: nvidia
+      containers:
+        - name: plex
+          image: "linuxserver/plex:latest"
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 32400
+              hostPort: 32400
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
+            - name: VERSION
+              value: "docker"
+            - name: PLEX_CLAIM
+              value: "claim-hyCW62xjGawCigMuKFSd"
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "all"
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: "all"
+            - name: CUDA_DRIVER_CAPABILITIES
+              value: "all"
+          volumeMounts:
+            - mountPath: "/config"
+              name: config
+            - mountPath: "/data"
+              name: mediacenter
+              subPath: media
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: plex-pvc
+        - name: mediacenter
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plex-pvc
+  namespace: mediacenter
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: plex
+  name: plex
+  namespace: mediacenter
+spec:
+  selector:
+    app: plex
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 32400
+      targetPort: 32400

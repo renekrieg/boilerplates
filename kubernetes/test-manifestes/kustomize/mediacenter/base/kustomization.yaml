@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: testdddd
+# commonLabels:
+#   env: homelab
+  
+
+resources:
+  - namespace.yaml
+  - radarr
+  # - sonarr
+  # - ingress-route.yaml
+vars:
+- name: RADARR
+  objref:
+    name: radarr
+    kind: Service
+    apiVersion: v1
+  fieldref:
+    fieldpath: metadata.name
+# - name: SONARR
+#   objref:
+#     name: sonarr
+#     kind: Service
+#     apiVersion: v1
+#   fieldref:
+#     fieldpath: metadata.name

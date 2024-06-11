@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sabnzbd
+  namespace: mediacenter
+  labels:
+    app: sabnzbd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sabnzbd
+  template:
+    metadata:
+      labels:
+        app: sabnzbd
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      nodeSelector:
+        worker: "true"
+      initContainers:
+      - name: chown
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /config"]
+        # command: ["sh", "-c", "chown -R 1000:1000 /config && chown -R 1000:1000 /data"]
+        volumeMounts:
+        - mountPath: /config 
+          name: config  
+        - mountPath: "/data" 
+          name: mediacenter
+      - name: config
+        image: busybox
+        command: ["sh", "-c"]
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+        args:
+          - "echo start; sed '/host_whitelist/ s/$/ , media.local.krlab.tech, traefik.local.krlab.tech, sabnzbd/' /config/sabnzbd.ini ;echo end;"
+        volumeMounts: 
+        - mountPath: /config 
+          name: config 
+      containers:
+        - name: sabnzbd
+          image: hotio/sabnzbd
+          ports:
+            - containerPort: 8080
+              name: webui
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
+            - name: defaultRule
+              value: ""
+          volumeMounts:
+            - mountPath: "/config"
+              name: config
+            - mountPath: /data
+              name: mediacenter
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: sabnzbd-pvc
+        - name: mediacenter
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sabnzbd-pvc
+  namespace: mediacenter
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: sabnzbd
+  name: sabnzbd
+  namespace: mediacenter
+spec:
+  type:  ClusterIP
+  selector:
+    app: sabnzbd
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080

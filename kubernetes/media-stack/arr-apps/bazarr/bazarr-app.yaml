@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bazarr
+  namespace: mediacenter
+  labels:
+    app: bazarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bazarr
+  template:
+    metadata:
+      labels:
+        app: bazarr
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      nodeSelector:
+        worker: "true"
+      initContainers:
+      - name: chown
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /config"]
+        # command: ["sh", "-c", "chown -R 1000:1000 /config && chown -R 1000:1000 /data"]
+        volumeMounts:
+        - mountPath: /config 
+          name: config  
+      containers:
+        - name: bazarr
+          image: linuxserver/bazarr
+          ports:
+            - containerPort: 6767
+              name: webui
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
+          livenessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl "http://localhost:6767/bazarr/api/health?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - curl "http://localhost:6767/bazarr/api/system/status?ApiKey=$(sed -ne '/ApiKey/{s/.*<ApiKey>\(.*\)<\/ApiKey>.*/\1/p;q;}' </config/config.xml)"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          volumeMounts:
+            - mountPath: "/config"
+              name: config
+            - mountPath: /data
+              name: mediacenter
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: bazarr-pvc
+        - name: mediacenter
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bazarr-pvc
+  namespace: mediacenter
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: bazarr
+  name: bazarr
+  namespace: mediacenter
+spec:
+  type: ClusterIP
+  selector:
+    app: bazarr
+  ports:
+  - port: 6767
+    protocol: TCP
+    targetPort: 6767
+  # ---

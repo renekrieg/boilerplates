@@ -1,0 +1,47 @@
+##############################################################
+## This is just a basic config file to get the app to start ##
+##############################################################
+
+minimum-age: 2m30s
+scan-delay: 15s
+scan-stats: 15m
+
+authentication:
+  username: rene
+  password: PASSWORD
+
+anchors:
+  - /data/media/.anchors/local.anchor
+
+port: 3030
+
+triggers:
+  manual:
+    priority: 0
+
+  sonarr:
+    - name: sonarr
+      priority: 2
+
+  radarr:
+    - name: radarr
+      priority: 2
+
+  inotify:
+    - priority: 1
+
+      include:
+        - ^/data/media
+
+      paths:
+      - path: /data/media/movies-hd
+      - path: /data/media/movies-hd-kids
+      - path: /data/media/movies-uhd
+      - path: /data/media/tv-hd
+      - path: /data/media/tv-kids
+      - path: /data/media/tv-uhd
+
+targets:
+  plex:
+    - url: http://plex:32400
+      token: PLEX_TOKEN

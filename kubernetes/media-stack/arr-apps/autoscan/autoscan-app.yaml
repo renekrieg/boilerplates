@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscan
+  namespace: mediacenter
+  labels:
+    app: autoscan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoscan
+  template:
+    metadata:
+      labels:
+        app: autoscan
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      nodeSelector:
+        worker: "true"
+      containers:
+        - name: autoscan
+          image: ghcr.io/hotio/autoscan
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 3030
+              name: webui
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
+            - name: UMASK
+              value: "002"
+          volumeMounts:
+            - mountPath: "/config"
+              name: config
+            - mountPath: /data
+              name: mediacenter
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: autoscan-pvc
+        - name: mediacenter
+          persistentVolumeClaim:
+            claimName: nfs-mediacenter
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: autoscan-pvc
+  namespace: mediacenter
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: autoscan
+  name: autoscan
+  namespace: mediacenter
+spec:
+  selector:
+    app: autoscan
+  ports:
+  - port: 3030
+    protocol: TCP
+    targetPort: 3030

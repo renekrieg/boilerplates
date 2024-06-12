@@ -70,5 +70,11 @@ spec:
       services:
         - name: notifiarr
           port: 5454
+    - match: Host(`overseerr.local.krlab.tech`)
+      kind: Rule
+      priority: 0
+      services:
+        - name: overseerr
+          port: 5055
   tls:
     secretName: local-krlab-tech-tls

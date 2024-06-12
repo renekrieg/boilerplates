@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overseerr
+  namespace: mediacenter
+  labels:
+    app: overseerr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: overseerr
+  template:
+    metadata:
+      labels:
+        app: overseerr
+    spec:
+      securityContext:
+        fsGroup: 1000
+      nodeSelector:
+        worker: "true"
+      containers:
+        - name: overseerr
+          image: ghcr.io/hotio/overseerr
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 5055
+              name: webui
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Berlin"
+            - name: UMASK
+              value: "002"
+          volumeMounts:
+            - mountPath: "/config"
+              name: config
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: overseerr-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: overseerr-pvc
+  namespace: mediacenter
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: overseerr
+  name: overseerr
+  namespace: mediacenter
+spec:
+  type: LoadBalancer
+  selector:
+    app: overseerr
+  ports:
+    - port: 5055
+      protocol: TCP
+      targetPort: 5055

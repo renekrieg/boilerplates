@@ -22,19 +22,13 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`www.proxmox.local.krlab.tech`)
-      kind: Rule
-      services:
-        - name: rackstation
-          port: 8006
-          scheme: https
-          passHostHeader: true
     - match: Host(`proxmox.local.krlab.tech`)
       kind: Rule
       priority: 1
       services:
         - name: proxmox
           port: 8006
+          passHostHeader: true
       middlewares:
         - name: default-headers
   tls:

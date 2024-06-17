@@ -1,0 +1,44 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mediacenter-external
+  namespace: mediacenter
+  annotations:
+    kubernetes.io/ingress.class: traefik-external
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`www.plex.krlab.tech`)
+      kind: Rule
+      services:
+        - name: plex
+          port: 32400
+      middlewares:
+        - name: default-headers
+    - match: Host(`plex.krlab.tech`)
+      kind: Rule
+      services:
+        - name: plex
+          port: 32400
+      middlewares:
+        - name: default-headers
+    - match: Host(`www.overseerr.krlab.tech`)
+      kind: Rule
+      priority: 0
+      services:
+        - name: overseerr
+          port: 5055
+      middlewares:
+        - name: default-headers
+    - match: Host(`overseerr.krlab.tech`)
+      kind: Rule
+      priority: 0
+      services:
+        - name: overseerr
+          port: 5055
+      middlewares:
+        - name: default-headers
+  tls:
+    secretName: local-krlab-tech-tls

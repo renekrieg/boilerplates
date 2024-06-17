@@ -55,6 +55,7 @@ service:
   annotations: {}
   labels: {}
   spec:
+    externalTrafficPolicy: Local # Needed if Traeffik should know the Real IP Adress of Client (https://kubernetes.io/docs/tutorials/services/source-ip/)
     loadBalancerIP: 172.16.50.80 # this should be an IP in the MetalLB range
   loadBalancerSourceRanges: []
   externalIPs: []

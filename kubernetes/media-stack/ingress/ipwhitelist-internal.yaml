@@ -1,0 +1,10 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ipwhitelist-internal
+  namespace: mediacenter
+spec:
+  ipAllowList:
+    sourceRange:
+      - 127.0.0.1/32
+      - 172.16.0.0/16

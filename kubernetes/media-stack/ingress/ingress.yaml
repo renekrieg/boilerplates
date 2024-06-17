@@ -10,7 +10,15 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`www.plex.local.krlab.tech`)
+    - match: Host(`www.plex.krlab.tech`)
+      kind: Rule
+      services:
+        - name: plex
+          port: 32400
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
+    - match: Host(`plex.krlab.tech`)
       kind: Rule
       services:
         - name: plex
@@ -20,61 +28,89 @@ spec:
       services:
         - name: plex
           port: 32400
-      # middlewares:
-      #   - name: default-headers
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/radarr`)
       kind: Rule
       priority: 0
       services:
         - name: radarr
           port: 7878
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/radarr-uhd`)
       kind: Rule
       priority: 0
       services:
         - name: radarr-uhd
           port: 7878
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/sonarr`)
       kind: Rule
       priority: 0
       services:
         - name: sonarr
           port: 8989
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/sonarr-uhd`)
       kind: Rule
       priority: 0
       services:
         - name: sonarr-uhd
           port: 8989
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/prowlarr`)
       kind: Rule
       priority: 0
       services:
         - name: prowlarr
           port: 9696
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/bazarr`)
       kind: Rule
       priority: 0
       services:
         - name: bazarr
           port: 6767
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/sabnzbd`)
       kind: Rule
       priority: 0
       services:
         - name: sabnzbd
           port: 8080
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`media.local.krlab.tech`) && PathPrefix(`/notifiarr`)
       kind: Rule
       priority: 0
       services:
         - name: notifiarr
           port: 5454
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
     - match: Host(`overseerr.local.krlab.tech`)
       kind: Rule
       priority: 0
       services:
         - name: overseerr
           port: 5055
+      middlewares:
+        - name: default-headers
+        - name: ipwhitelist-internal
   tls:
     secretName: local-krlab-tech-tls

@@ -1,2 +1,3 @@
 secret-cf-token.yaml
 secret-dashboard.yaml
+.env
